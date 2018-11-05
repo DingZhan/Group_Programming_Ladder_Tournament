@@ -1,48 +1,84 @@
-#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
 
-#define MAX_N 102
 
-int matrix[MAX_N][MAX_N];
+#define MAX_N 32
+typedef struct TreeNode_
+{
+    int value;
+    struct TreeNode_ *left;
+    struct TreeNode_ *right;
+}TreeNode;
 
+void BuildTree(int *inOrder, int *preOrder, int n, TreeNode** root)
+{
+    int i;
+    if(n==0)
+        return;
+    for(i=0; i<n; ++i)
+    {
+        if(inOrder[i]==preOrder[0])
+            break;
+    }
+    *root = (TreeNode*)malloc(sizeof(TreeNode));
+    (*root)->left = (*root)->right = NULL;
+    (*root)->value = preOrder[0];
+    BuildTree(inOrder, preOrder+1, i, &((*root)->left));
+    BuildTree(inOrder+i+1, preOrder+i+1, n-i-1, &((*root)->right));
+}
+void Mirror(TreeNode* root)
+{
+    if(!root)
+        return;
+    TreeNode* t;
+    t = root->left;
+    root->left = root->right;
+    root->right = t;
+    Mirror(root->left);
+    Mirror(root->right);
+}
+
+void LevelVisit(TreeNode *root)
+{
+    if(!root)
+        return;
+    TreeNode *queue[MAX_N], *seed;
+    int front=0, back=0, bFirst=1;
+    queue[back++] = root;
+    while(front<back)
+    {
+        seed = queue[front];
+        //pop front
+        ++front;
+        if(!bFirst)
+            printf(" ");
+        printf("%d", seed->value);
+        bFirst = 0;
+        if(seed->left)
+            queue[back++] = seed->left;
+        if(seed->right)
+            queue[back++] = seed->right;
+    }
+}
+void FreeTree(TreeNode* root)
+{
+    if(!root)
+        return;
+    FreeTree(root->left);
+    FreeTree(root->right);
+    free(root);
+}
 int main()
 {
-    int i, j, N, id1, id2, M, K, relation, bCommonFriend;
-
-    std::cin>>N>>M>>K;
-    for(i=0; i<M; ++i)
-    {
-        std::cin>>id1>>id2>>relation;
-        matrix[id1][id2] = relation;
-        matrix[id2][id1] = relation;
-    }
-    for(i=0; i<K; ++i)
-    {
-        std::cin>>id1>>id2;
-        if(matrix[id1][id2]==1)
-            std::cout<<"No problem\n";
-        else if(matrix[id1][id2]==0)
-            std::cout<<"OK\n";
-        else if(matrix[id1][id2]==-1)
-        {
-            //find friends of id1
-            bCommonFriend = 0;
-            for(j=1; j<=N; ++j)
-            {
-                if(j==id1)
-                    continue;
-                if(matrix[id1][j]==1)
-                {
-                    if(matrix[id1][j]==1)
-                    {
-                        bCommonFriend = 1;
-                        break;
-                    }
-                }
-            }
-            if(bCommonFriend)
-                std::cout<<"OK but...\n";
-            else
-                std::cout<<"No way\n";
-        }
-    }
+    TreeNode *root=NULL;
+    int i, N, inOrder[MAX_N], preOrder[MAX_N];
+    scanf("%d", &N);
+    for(i=0; i<N; ++i)
+        scanf("%d", inOrder+i);
+    for(i=0; i<N; ++i)
+        scanf("%d", preOrder+i);
+    BuildTree(inOrder, preOrder, N, &root);
+    Mirror(root);
+    LevelVisit(root);
+    FreeTree(root);
 }
